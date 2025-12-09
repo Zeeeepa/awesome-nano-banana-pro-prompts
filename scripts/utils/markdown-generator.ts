@@ -39,6 +39,21 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
 const MAX_REGULAR_PROMPTS_TO_DISPLAY = 120;
 
 /**
+ * Convert locale to URL language prefix
+ * en -> en-US, zh -> zh-CN, others remain unchanged
+ */
+function getLocalePrefix(locale: string): string {
+  if (locale === 'en') {
+    return 'en-US';
+  }
+  if (locale === 'zh') {
+    return 'zh-CN';
+  }
+  // Other language codes (e.g., zh-TW, ja-JP) remain unchanged
+  return locale;
+}
+
+/**
  * 清理提示词内容中的代码块标记
  * 移除 ``` 或 ```json 等格式的代码块标记
  * 
@@ -159,7 +174,7 @@ function generateGalleryCTA(locale: string): string {
 
 </div>
 
-**[${t('browseGallery', locale)}](https://youmind.com/nano-banana-pro-prompts)**
+**[${t('browseGallery', locale)}](https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts)**
 
 ${t('galleryFeatures', locale)}
 
@@ -223,7 +238,7 @@ function generatePromptSection(prompt: Prompt, index: number, locale: string): s
   md += `- **${t('languages', locale)}:** ${prompt.language}\n\n`;
 
   const encodedPrompt = encodeURIComponent(promptContent);
-  md += `**[${t('tryItNow', locale)}](https://youmind.com/nano-banana-pro-prompts?prompt=${encodedPrompt})**\n\n`;
+  md += `**[${t('tryItNow', locale)}](https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts?prompt=${encodedPrompt})**\n\n`;
 
   md += `---\n\n`;
 
@@ -259,7 +274,7 @@ function generateAllPromptsSection(regular: Prompt[], hiddenCount: number, local
     md += `<div align="center">\n\n`;
     md += `### 🎯 ${hiddenCount} ${t('morePromptsDesc', locale)}\n\n`;
     md += `Due to GitHub's content length limitations, we can only display the first ${MAX_REGULAR_PROMPTS_TO_DISPLAY} regular prompts in this README.\n\n`;
-    md += `**[${t('viewAll', locale)}](https://youmind.com/nano-banana-pro-prompts)**\n\n`;
+    md += `**[${t('viewAll', locale)}](https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts)**\n\n`;
     md += `The gallery features:\n\n`;
     md += `${t('galleryFeature1', locale)}\n\n`;
     md += `${t('galleryFeature2', locale)}\n\n`;
@@ -395,7 +410,7 @@ ${t('licensedUnder', locale)}
 
 <div align="center">
 
-**[🌐 ${t('viewInGallery', locale)}](https://youmind.com/nano-banana-pro-prompts)** •
+**[🌐 ${t('viewInGallery', locale)}](https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts)** •
 **[📝 ${t('submitPrompt', locale)}](https://github.com/YouMind-OpenLab/awesome-nano-banana-pro-prompts/issues/new?template=submit-prompt.yml)** •
 **[⭐ ${t('starRepo', locale)}](https://github.com/YouMind-OpenLab/awesome-nano-banana-pro-prompts)**
 
