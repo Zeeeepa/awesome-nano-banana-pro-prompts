@@ -138,15 +138,31 @@ interface CMSResponse {
 }
 
 /**
- * 获取 prompts
- * @param locale 语言版本，默认 en-US
- * @returns { docs: Prompt[], total: number }
+ * 处理 prompt 数据，提取图片
  */
-export async function fetchAllPrompts(
-  locale: string = "en-US"
-): Promise<{ docs: Prompt[]; total: number }> {
+function processPromptImages(item: Prompt): Prompt {
+  let images: string[] = [];
+  if (item.media) {
+    images = item.media.map((m) => m.url || "").filter(Boolean) as string[];
+  } else {
+    if (item.sourceMedia) {
+      images = item.sourceMedia;
+    }
+    if (item.video?.thumbnail) {
+      images.push(item.video.thumbnail);
+    }
+  }
+  return { ...item, sourceMedia: images };
+}
+
+/**
+ * 获取 featured prompts
+ */
+async function fetchFeaturedPrompts(
+  locale: string
+): Promise<{ docs: Prompt[]; totalDocs: number }> {
   const query = {
-    limit: 200,
+    limit: 30,
     sort: ["-featured", "sort", "-sourcePublishedAt"].join(","),
     depth: 2,
     locale,
@@ -172,27 +188,100 @@ export async function fetchAllPrompts(
   }
 
   const data = (await response.json()) as CMSResponse;
-
-  // 过滤：只要有图片的（不需要检查 _status，因为默认都是发布状态）
-  const docs = data.docs
-    .map((item) => {
-      let images: string[] = [];
-      if (item.media) {
-        images = item.media.map((m) => m.url || "").filter(Boolean) as string[];
-      } else {
-        if (item.sourceMedia) {
-          images = item.sourceMedia;
-        }
-        if (item.video?.thumbnail) {
-          images.push(item.video.thumbnail);
-        }
-      }
-
-      return { ...item, sourceMedia: images };
-    })
+  const docs = data.docs.filter((p) => p.featured)
+    .map(processPromptImages)
     .filter((p) => p.sourceMedia?.length > 0);
 
-  return { docs, total: data.totalDocs };
+  return { docs, totalDocs: data.totalDocs };
+}
+
+/**
+ * 获取指定类目的 prompts
+ */
+async function fetchPromptsByCategory(
+  categoryId: number,
+  categoryTitle: string,
+  locale: string
+): Promise<Prompt[]> {
+  const query = {
+    limit: 20,
+    sort: ["sort", "-sourcePublishedAt"].join(","),
+    depth: 2,
+    locale,
+    where: {
+      model: {
+        equals: "nano-banana-pro",
+      },
+      "imageCategories.useCases": {
+        contains: categoryId,
+      },
+    },
+  };
+
+  const stringifiedQuery = stringify(query, { addQueryPrefix: true });
+  const url = `${CMS_HOST}/api/prompts${stringifiedQuery}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `users API-Key ${CMS_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`CMS API error: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as CMSResponse;
+  return data.docs
+    .map(processPromptImages)
+    .filter((p) => p.sourceMedia?.length > 0)
+    .map((p) => ({
+      ...p,
+      title: `${categoryTitle} - ${p.title}`,
+    }));
+}
+
+/**
+ * 获取 prompts
+ * @param locale 语言版本，默认 en-US
+ * @param allCategories 完整类目数组，函数内部会筛选出 use-cases 的二级类目
+ * @returns { docs: Prompt[], total: number }
+ */
+export async function fetchAllPrompts(
+  locale: string = "en-US",
+  allCategories: FilterCategory[] = []
+): Promise<{ docs: Prompt[]; total: number }> {
+  // 1. 获取 featured prompts
+  const { docs: featuredPrompts, totalDocs } =
+    await fetchFeaturedPrompts(locale);
+
+  // 2. 筛选出 use-cases 的二级类目（parentSlug 为 use-cases 的类目）
+  const useCaseCategories = allCategories.filter(
+    (cat) => cat.parentSlug === "use-cases"
+  );
+
+  // 3. 按类目顺序获取每个类目的 prompts
+  const categoryPrompts: Prompt[] = [];
+  const seenIds = new Set(featuredPrompts.map((p) => p.id));
+
+  for (const category of useCaseCategories) {
+    const prompts = await fetchPromptsByCategory(
+      category.id,
+      category.title,
+      locale
+    );
+    // 去重：排除已在 featured 或其他类目中出现的 prompts
+    for (const prompt of prompts) {
+      if (!seenIds.has(prompt.id)) {
+        seenIds.add(prompt.id);
+        categoryPrompts.push(prompt);
+      }
+    }
+  }
+
+  const docs = [...featuredPrompts, ...categoryPrompts];
+  return { docs, total: totalDocs };
 }
 
 /**

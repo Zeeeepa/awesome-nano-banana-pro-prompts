@@ -1,7 +1,14 @@
-import 'dotenv/config';
-import fs from 'fs';
-import { fetchAllPrompts, sortPrompts, fetchPromptCategories } from './utils/cms-client.js';
-import { generateMarkdown, SUPPORTED_LANGUAGES } from './utils/markdown-generator.js';
+import "dotenv/config";
+import fs from "fs";
+import {
+  fetchAllPrompts,
+  sortPrompts,
+  fetchPromptCategories,
+} from "./utils/cms-client.js";
+import {
+  generateMarkdown,
+  SUPPORTED_LANGUAGES,
+} from "./utils/markdown-generator.js";
 
 async function main() {
   try {
@@ -9,32 +16,40 @@ async function main() {
     for (const lang of SUPPORTED_LANGUAGES) {
       console.log(`\n🌐 Processing language: ${lang.name} (${lang.code})...`);
 
-      console.log(`  📥 Fetching prompts from CMS (locale: ${lang.code})...`);
-      const { docs: prompts, total } = await fetchAllPrompts(lang.code);
-
-      console.log(`  ✅ Fetched ${prompts.length} prompts (total: ${total})`);
-
-      console.log('  📥 Fetching categories from CMS...');
+      console.log("  📥 Fetching categories from CMS...");
       const { allCategories } = await fetchPromptCategories(lang.code);
       console.log(`  ✅ Fetched ${allCategories.length} categories`);
 
-      console.log('  🔃 Sorting prompts...');
+      console.log(`  📥 Fetching prompts from CMS (locale: ${lang.code})...`);
+      const { docs: prompts, total } = await fetchAllPrompts(
+        lang.code,
+        allCategories
+      );
+
+      console.log(`  ✅ Fetched ${prompts.length} prompts (total: ${total})`);
+
+      console.log("  🔃 Sorting prompts...");
       const sorted = sortPrompts(prompts, total);
 
-      console.log('  📝 Generating README...');
-      const markdown = generateMarkdown({ ...sorted, categories: allCategories }, lang.code);
+      console.log("  📝 Generating README...");
+      const markdown = generateMarkdown(
+        { ...sorted, categories: allCategories },
+        total,
+        lang.code
+      );
 
       console.log(`  💾 Writing ${lang.readmeFileName}...`);
-      fs.writeFileSync(lang.readmeFileName, markdown, 'utf-8');
+      fs.writeFileSync(lang.readmeFileName, markdown, "utf-8");
 
       console.log(`  ✅ ${lang.readmeFileName} updated successfully!`);
-      console.log(`  📊 Stats: ${sorted.stats.total} total, ${sorted.featured.length} featured`);
+      console.log(
+        `  📊 Stats: ${sorted.stats.total} total, ${sorted.featured.length} featured`
+      );
     }
 
-    console.log('\n✨ All languages processed successfully!');
-
+    console.log("\n✨ All languages processed successfully!");
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error("❌ Error:", error);
     process.exit(1);
   }
 }

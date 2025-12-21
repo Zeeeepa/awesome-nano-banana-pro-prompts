@@ -90,11 +90,11 @@ function cleanPromptContent(content: string): string {
   return cleaned;
 }
 
-export function generateMarkdown(data: SortedPrompts, locale: string = 'en'): string {
+export function generateMarkdown(data: SortedPrompts, total: number, locale: string = 'en'): string {
   const { featured, regular, stats, categories } = data;
 
   const displayedRegular = regular.slice(0, MAX_REGULAR_PROMPTS_TO_DISPLAY);
-  const hiddenCount = regular.length - displayedRegular.length;
+  const hiddenCount = total - displayedRegular.length;
 
   let md = generateHeader(locale);
   md += generateLanguageNavigation(locale);
