@@ -1,4 +1,4 @@
-import { Prompt } from './cms-client.js';
+import { Prompt, FilterCategory } from './cms-client.js';
 import { t } from './i18n.js';
 
 interface SortedPrompts {
@@ -9,6 +9,7 @@ interface SortedPrompts {
     total: number;
     featured: number;
   };
+  categories?: FilterCategory[];
 }
 
 export interface LanguageConfig {
@@ -36,7 +37,7 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
   { code: 'tr-TR', name: 'Türkçe', readmeFileName: 'README_tr-TR.md' },
 ];
 
-const MAX_REGULAR_PROMPTS_TO_DISPLAY = 120;
+const MAX_REGULAR_PROMPTS_TO_DISPLAY = 500;
 
 /**
  * Convert locale to URL language prefix
@@ -90,15 +91,14 @@ function cleanPromptContent(content: string): string {
 }
 
 export function generateMarkdown(data: SortedPrompts, locale: string = 'en'): string {
-  const { featured, regular, stats } = data;
+  const { featured, regular, stats, categories } = data;
 
-  // Featured 全部展示，Regular 最多 120 条
   const displayedRegular = regular.slice(0, MAX_REGULAR_PROMPTS_TO_DISPLAY);
   const hiddenCount = regular.length - displayedRegular.length;
 
   let md = generateHeader(locale);
   md += generateLanguageNavigation(locale);
-  md += generateGalleryCTA(locale);
+  md += generateGalleryCTA(categories || [], locale);
   md += generateTOC(locale);
   md += generateWhatIs(locale);
   md += generateStats(stats, locale);
@@ -158,13 +158,13 @@ function generateLanguageNavigation(currentLocale: string): string {
   return md;
 }
 
-function generateGalleryCTA(locale: string): string {
+function generateGalleryCTA(categories: FilterCategory[], locale: string): string {
   // 根据语言选择图片：zh 和 zh-TW 使用 zh，其他使用 en
   const imageLang = locale === 'zh' || locale === 'zh-TW' ? 'zh' : 'en';
   const coverImage = `public/images/nano-banana-pro-prompts-cover-${imageLang}.png`;
   const listImage = `public/images/nano-banana-pro-prompts-list-${imageLang}.png`;
 
-  return `## 🌐 ${t('viewInGallery', locale)}
+  let md = `## 🌐 ${t('viewInGallery', locale)}
 
 <div align="center">
 
@@ -184,10 +184,43 @@ ${t('galleryFeatures', locale)}
 | 🔍 ${t('search', locale)} | ${t('ctrlFOnly', locale)} | ${t('fullTextSearch', locale)} |
 | 🤖 ${t('aiGenerate', locale)} | - | ${t('aiOneClickGen', locale)} |
 | 📱 ${t('mobile', locale)} | ${t('basic', locale)} | ${t('fullyResponsive', locale)} |
-
----
+| 🏷️ ${t('categories', locale)} | - | ${t('categoryBrowsing', locale)} |
 
 `;
+
+  // Add categories section if available
+  if (categories.length > 0) {
+    md += generateCategoriesSection(categories, locale);
+  }
+
+  md += `---
+
+`;
+
+  return md;
+}
+
+function generateCategoriesSection(categories: FilterCategory[], locale: string): string {
+  // Get parent categories (no parentId)
+  const parentCategories = categories.filter(c => c.parentId === null);
+
+  let md = `\n### 🏷️ ${t('browseByCategory', locale)}\n\n`;
+
+  for (const parent of parentCategories) {
+    // Parent category - no link
+    md += `- **${parent.title}**\n`;
+
+    // Get children of this parent
+    const children = categories.filter(c => c.parentId === parent.id);
+    for (const child of children) {
+      // Child category - with link
+      const categoryUrl = `https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts?categories=${child.slug}`;
+      md += `  - [${child.title}](${categoryUrl})\n`;
+    }
+  }
+
+  md += `\n`;
+  return md;
 }
 
 function generatePromptSection(prompt: Prompt, index: number, locale: string): string {
@@ -237,8 +270,7 @@ function generatePromptSection(prompt: Prompt, index: number, locale: string): s
   md += `- **${t('published', locale)}:** ${publishedDate}\n`;
   md += `- **${t('languages', locale)}:** ${prompt.language}\n\n`;
 
-  const encodedPrompt = encodeURIComponent(promptContent);
-  md += `**[${t('tryItNow', locale)}](https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts?prompt=${encodedPrompt})**\n\n`;
+  md += `**[${t('tryItNow', locale)}](https://youmind.com/${getLocalePrefix(locale)}/nano-banana-pro-prompts?id=${prompt.id})**\n\n`;
 
   md += `---\n\n`;
 

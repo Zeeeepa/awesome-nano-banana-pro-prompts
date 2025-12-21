@@ -83,6 +83,9 @@ export interface Translation {
   basic: string;
   fullyResponsive: string;
   aiOneClickGen: string;
+  categories: string;
+  categoryBrowsing: string;
+  browseByCategory: string;
 }
 
 const en: Translation = {
@@ -165,6 +168,9 @@ const en: Translation = {
   basic: 'Basic',
   fullyResponsive: 'Fully responsive',
   aiOneClickGen: 'AI one-click generation',
+  categories: 'Categories',
+  categoryBrowsing: 'Category browsing',
+  browseByCategory: 'Browse by Category',
 };
 
 const zh: Translation = {
@@ -247,6 +253,9 @@ const zh: Translation = {
   basic: '基础',
   fullyResponsive: '完全响应式',
   aiOneClickGen: 'AI 一键生图',
+  categories: '分类',
+  categoryBrowsing: '分类浏览',
+  browseByCategory: '按分类浏览',
 };
 
 const zhTW: Translation = {
@@ -330,6 +339,9 @@ const zhTW: Translation = {
   basic: '基礎',
   fullyResponsive: '完全響應式',
   aiOneClickGen: 'AI 一鍵生圖',
+  categories: '分類',
+  categoryBrowsing: '分類瀏覽',
+  browseByCategory: '按分類瀏覽',
 };
 
 const ja: Translation = {
@@ -413,6 +425,9 @@ const ja: Translation = {
   basic: '基本',
   fullyResponsive: '完全レスポンシブ',
   aiOneClickGen: 'AI ワンクリック生成',
+  categories: 'カテゴリー',
+  categoryBrowsing: 'カテゴリー閲覧',
+  browseByCategory: 'カテゴリーで閲覧',
 };
 
 const ko: Translation = {
@@ -496,6 +511,9 @@ const ko: Translation = {
   basic: '기본',
   fullyResponsive: '완전 반응형',
   aiOneClickGen: 'AI 원클릭 생성',
+  categories: '카테고리',
+  categoryBrowsing: '카테고리 탐색',
+  browseByCategory: '카테고리별 탐색',
 };
 
 const de: Translation = {
@@ -579,6 +597,9 @@ const de: Translation = {
   basic: 'Basis',
   fullyResponsive: 'Vollständig responsiv',
   aiOneClickGen: 'KI Ein-Klick-Generierung',
+  categories: 'Kategorien',
+  categoryBrowsing: 'Kategorie-Browsing',
+  browseByCategory: 'Nach Kategorie durchsuchen',
 };
 
 const fr: Translation = {
@@ -662,6 +683,9 @@ const fr: Translation = {
   basic: 'Basique',
   fullyResponsive: 'Entièrement responsive',
   aiOneClickGen: 'Génération IA en un clic',
+  categories: 'Catégories',
+  categoryBrowsing: 'Navigation par catégorie',
+  browseByCategory: 'Parcourir par catégorie',
 };
 
 const es: Translation = {
@@ -745,6 +769,9 @@ const es: Translation = {
   basic: 'Básico',
   fullyResponsive: 'Totalmente responsive',
   aiOneClickGen: 'Generación IA con un clic',
+  categories: 'Categorías',
+  categoryBrowsing: 'Navegación por categoría',
+  browseByCategory: 'Explorar por categoría',
 };
 
 const it: Translation = {
@@ -828,6 +855,9 @@ const it: Translation = {
   basic: 'Base',
   fullyResponsive: 'Completamente responsive',
   aiOneClickGen: 'Generazione IA con un clic',
+  categories: 'Categorie',
+  categoryBrowsing: 'Navigazione per categoria',
+  browseByCategory: 'Sfoglia per categoria',
 };
 
 const pt: Translation = {
@@ -911,6 +941,9 @@ const pt: Translation = {
   basic: 'Básico',
   fullyResponsive: 'Totalmente responsivo',
   aiOneClickGen: 'Geração IA com um clique',
+  categories: 'Categorias',
+  categoryBrowsing: 'Navegação por categoria',
+  browseByCategory: 'Explorar por categoria',
 };
 
 const tr: Translation = {
@@ -994,6 +1027,9 @@ const tr: Translation = {
   basic: 'Temel',
   fullyResponsive: 'Tamamen duyarlı',
   aiOneClickGen: 'AI Tek Tıkla Üretim',
+  categories: 'Kategoriler',
+  categoryBrowsing: 'Kategori gezinmesi',
+  browseByCategory: 'Kategoriye göre gözat',
 };
 
 const vi: Translation = {
@@ -1077,6 +1113,9 @@ const vi: Translation = {
   basic: 'Cơ bản',
   fullyResponsive: 'Hoàn toàn phản hồi',
   aiOneClickGen: 'Tạo bằng AI một cú nhấp',
+  categories: 'Danh mục',
+  categoryBrowsing: 'Duyệt theo danh mục',
+  browseByCategory: 'Duyệt theo danh mục',
 };
 
 const th: Translation = {
@@ -1160,6 +1199,9 @@ const th: Translation = {
   basic: 'พื้นฐาน',
   fullyResponsive: 'ตอบสนองอย่างเต็มที่',
   aiOneClickGen: 'สร้างด้วย AI คลิกเดียว',
+  categories: 'หมวดหมู่',
+  categoryBrowsing: 'เรียกดูตามหมวดหมู่',
+  browseByCategory: 'เรียกดูตามหมวดหมู่',
 };
 
 const hi: Translation = {
@@ -1243,6 +1285,9 @@ const hi: Translation = {
   basic: 'बुनियादी',
   fullyResponsive: 'पूरी तरह से उत्तरदायी',
   aiOneClickGen: 'AI एक-क्लिक जनरेशन',
+  categories: 'श्रेणियाँ',
+  categoryBrowsing: 'श्रेणी ब्राउज़िंग',
+  browseByCategory: 'श्रेणी के अनुसार ब्राउज़ करें',
 };
 
 const I18N: Record<string, Translation> = {

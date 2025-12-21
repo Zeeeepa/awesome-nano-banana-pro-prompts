@@ -133,15 +133,16 @@ interface CMSResponse {
 }
 
 /**
- * 获取所有 prompts（英文版本）
+ * 获取 prompts
  * @param locale 语言版本，默认 en-US
+ * @returns { docs: Prompt[], total: number }
  */
 export async function fetchAllPrompts(
   locale: string = "en-US"
-): Promise<Prompt[]> {
+): Promise<{ docs: Prompt[]; total: number }> {
   const query = {
-    limit: 9999,
-    sort: "-sourcePublishedAt",
+    limit: 600,
+    sort: ['-featured', 'sort', '-sourcePublishedAt'],
     depth: 2,
     locale,
     where: {
@@ -168,7 +169,7 @@ export async function fetchAllPrompts(
   const data = (await response.json()) as CMSResponse;
 
   // 过滤：只要有图片的（不需要检查 _status，因为默认都是发布状态）
-  return data.docs
+  const docs = data.docs
     .map((item) => {
       let images: string[] = [];
       if (item.media) {
@@ -185,12 +186,16 @@ export async function fetchAllPrompts(
       return { ...item, sourceMedia: images };
     })
     .filter((p) => p.sourceMedia?.length > 0);
+
+  return { docs, total: data.totalDocs };
 }
 
 /**
  * 排序 prompts
+ * @param prompts prompts 数组
+ * @param total 可选的总数（用于显示真实总数，而非当前获取的数量）
  */
-export function sortPrompts(prompts: Prompt[]) {
+export function sortPrompts(prompts: Prompt[], total?: number) {
   // 排序逻辑：featured 优先 → sort 升序 → 发布时间倒序
   const sorted = [...prompts].sort((a, b) => {
     const aFeatured = a.featured ? 1 : 0;
@@ -217,7 +222,7 @@ export function sortPrompts(prompts: Prompt[]) {
     featured,
     regular,
     stats: {
-      total: prompts.length,
+      total: total ?? prompts.length,
       featured: featured.length,
     },
   };
@@ -313,4 +318,117 @@ export async function updatePrompt(
   }
 
   return response.json() as Promise<Prompt | null>;
+}
+
+/**
+ * Category from CMS
+ */
+export interface CMSPromptCategory {
+  id: number;
+  title: string;
+  slug: string;
+  parent?: CMSPromptCategory | null;
+  featured?: boolean;
+  sort?: number;
+}
+
+/**
+ * Processed category for filtering
+ */
+export interface FilterCategory {
+  id: number;
+  title: string;
+  slug: string;
+  parentId?: number | null;
+  parentSlug?: string | null;
+  featured?: boolean;
+  sort?: number | null;
+}
+
+/**
+ * Category group organized by parent-child structure
+ */
+export interface CategoryGroup {
+  parentId: number | null;
+  parentTitle: string | null;
+  parentSlug: string | null;
+  children: FilterCategory[];
+}
+
+interface CMSCategoryResponse {
+  docs: CMSPromptCategory[];
+  totalDocs: number;
+}
+
+/**
+ * Fetch prompt categories from CMS
+ */
+export async function fetchPromptCategories(
+  locale: string = "en-US"
+): Promise<{
+  allCategories: FilterCategory[];
+  featuredCategories: FilterCategory[];
+}> {
+  const query = {
+    limit: 9999,
+    sort: "sort",
+    locale,
+    where: {
+      campaign: {
+        contains: "nano-banana-pro-prompts",
+      },
+    },
+  };
+
+  const stringifiedQuery = stringify(query, { addQueryPrefix: true });
+  const url = `${CMS_HOST}/api/prompt-categories${stringifiedQuery}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `users API-Key ${CMS_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`CMS API error: ${response.statusText}`);
+  }
+
+  const data = (await response.json()) as CMSCategoryResponse;
+
+  // Transform to FilterCategory format
+  const allCategories: FilterCategory[] = data.docs.map((cat) => {
+    let parentId: number | null = null;
+    let parentSlug: string | null = null;
+
+    if (cat.parent) {
+      if (typeof cat.parent === "number") {
+        parentId = cat.parent;
+      } else if (typeof cat.parent === "object" && cat.parent !== null) {
+        parentId = cat.parent.id;
+        parentSlug = cat.parent.slug;
+      }
+    }
+
+    return {
+      id: cat.id,
+      title: cat.title,
+      slug: cat.slug,
+      parentId,
+      parentSlug,
+      featured: cat.featured ?? false,
+      sort: cat.sort,
+    };
+  });
+
+  // Filter featured categories (leaf nodes with featured=true)
+  const featuredCategories = allCategories.filter((cat) => {
+    const isParent = allCategories.some((c) => c.parentId === cat.id);
+    return cat.featured && !isParent;
+  });
+
+  return {
+    allCategories,
+    featuredCategories,
+  };
 }
